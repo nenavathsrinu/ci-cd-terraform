@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    AWS_DEFAULT_REGION = 'ap-south-1' // or your preferred region
+    AWS_DEFAULT_REGION = 'ap-south-1'
   }
 
   stages {
@@ -14,22 +14,35 @@ pipeline {
 
     stage('Terraform Init') {
       steps {
-        withCredentials([[
-          $class: 'AmazonWebServicesCredentialsBinding',
-          credentialsId: 'aws-credentials'
+        withCredentials([[ 
+          $class: 'AmazonWebServicesCredentialsBinding', 
+          credentialsId: 'aws-credentials' 
         ]]) {
-          sh 'terraform init'
+          script {
+            def status = sh(script: 'terraform init', returnStatus: true)
+            if (status != 0) {
+              error('❌ Terraform Init Failed. Check backend config or credentials.')
+            }
+          }
         }
       }
     }
 
     stage('Terraform Apply') {
+      options {
+        timeout(time: 10, unit: 'MINUTES') // Prevent infinite hanging
+      }
       steps {
-        withCredentials([[
-          $class: 'AmazonWebServicesCredentialsBinding',
-          credentialsId: 'aws-credentials'
+        withCredentials([[ 
+          $class: 'AmazonWebServicesCredentialsBinding', 
+          credentialsId: 'aws-credentials' 
         ]]) {
-          sh 'terraform apply -auto-approve'
+          script {
+            def status = sh(script: 'terraform apply -auto-approve', returnStatus: true)
+            if (status != 0) {
+              error('❌ Terraform Apply Failed. Please check logs.')
+            }
+          }
         }
       }
     }
