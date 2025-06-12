@@ -45,7 +45,9 @@ pipeline {
         }
       }
     }
-
+    sshagent(['your-ssh-credential-id']) {
+    sh 'ansible-playbook -i inventory.ini install_httpd.yml'
+}
     stage('Run Ansible on Remote Server') {
       steps {
         sshagent (credentials: ['ansible-ssh-key']) {
