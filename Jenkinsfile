@@ -48,7 +48,7 @@ pipeline {
 
     stage('Run Ansible on Remote Server') {
       steps {
-        sshagent (credentials: ['ansible-ssh-key']) {
+        sshagent (credentials: ['ansible']) {
           sh '''
             ssh -o StrictHostKeyChecking=no ec2-user@13.234.112.80 '
               ansible-playbook -i /home/ec2-user/ansible-playbooks/inventory.ini \
