@@ -1,6 +1,10 @@
 pipeline {
   agent any
 
+  environment {
+    AWS_DEFAULT_REGION = 'ap-south-1' // or your preferred region
+  }
+
   stages {
     stage('Checkout Code') {
       steps {
@@ -10,14 +14,25 @@ pipeline {
 
     stage('Terraform Init') {
       steps {
-        sh 'terraform init'
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-credentials'
+        ]]) {
+          sh 'terraform init'
+        }
       }
     }
 
     stage('Terraform Apply') {
       steps {
-        sh 'terraform apply -auto-approve'
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-credentials'
+        ]]) {
+          sh 'terraform apply -auto-approve'
+        }
       }
     }
   }
 }
+
