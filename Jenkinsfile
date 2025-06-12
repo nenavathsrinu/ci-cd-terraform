@@ -50,7 +50,7 @@ pipeline {
       steps {
         sshagent (credentials: ['ansible']) {
           sh '''
-            ssh -o StrictHostKeyChecking=no ec2-user@13.234.112.80 '
+            ssh -o StrictHostKeyChecking=no ec2-user@13.232.198.57 '
               ansible-playbook -i /home/ec2-user/ansible-playbooks/inventory.ini \
               /home/ec2-user/ansible-playbooks/install_httpd.yml \
               --private-key /home/ec2-user/ansible-playbooks/ansible.pem'
