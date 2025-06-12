@@ -14,7 +14,7 @@ pipeline {
 
     stage('Terraform Init') {
       steps {
-        withCredentials([[
+        withCredentials([[ 
           $class: 'AmazonWebServicesCredentialsBinding',
           credentialsId: 'aws-credentials'
         ]]) {
@@ -28,11 +28,18 @@ pipeline {
         timeout(time: 10, unit: 'MINUTES')
       }
       steps {
-        withCredentials([[
+        withCredentials([[ 
           $class: 'AmazonWebServicesCredentialsBinding',
           credentialsId: 'aws-credentials'
         ]]) {
-          sh 'terraform apply -auto-approve'
+          script {
+            try {
+              sh 'terraform apply -auto-approve'
+            } catch (err) {
+              echo "⚠️ Terraform apply exited unexpectedly: ${err}"
+              error("Stopping pipeline due to Terraform failure")
+            }
+          }
         }
       }
     }
@@ -46,13 +53,14 @@ pipeline {
       }
     }
 
-    stage('Run Ansible Playbook') {
+    stage('Run Ansible on Remote Server') {
       steps {
-        sshagent(credentials: ['ansible']) {
+        sshagent (credentials: ['ansible']) {
           sh '''
-            ansible-playbook -i inventory.ini install_httpd.yml \
-              --private-key ~/.ssh/ansible.pem \
-              -u ec2-user
+            ssh -o StrictHostKeyChecking=no ec2-user@13.232.198.57 '
+              ansible-playbook -i /home/ec2-user/ansible-playbooks/inventory.ini \
+              /home/ec2-user/ansible-playbooks/install_httpd.yml \
+              --private-key /home/ec2-user/ansible-playbooks/ansible.pem'
           '''
         }
       }
@@ -65,6 +73,9 @@ pipeline {
     }
     failure {
       echo '❌ Pipeline failed. Check console output.'
+    }
+    always {
+      echo '🧹 Cleaning up pipeline state'
     }
   }
 }
