@@ -32,7 +32,7 @@ pipeline {
           $class: 'AmazonWebServicesCredentialsBinding',
           credentialsId: 'aws-credentials'
         ]]) {
-          sh 'terraform apply -var-file="dev.tfvars" -auto-approve'
+          sh 'terraform apply -auto-approve'
         }
       }
     }
