@@ -46,14 +46,13 @@ pipeline {
       }
     }
 
-    stage('Run Ansible on Remote Server') {
+    stage('Run Ansible Playbook') {
       steps {
-        sshagent (credentials: ['ansible']) {
+        sshagent(credentials: ['ansible']) {
           sh '''
-            ssh -o StrictHostKeyChecking=no ec2-user@13.232.198.57 '
-              ansible-playbook -i /home/ec2-user/ansible-playbooks/inventory.ini \
-              /home/ec2-user/ansible-playbooks/install_httpd.yml \
-              --private-key /home/ec2-user/ansible-playbooks/ansible.pem'
+            ansible-playbook -i inventory.ini install_httpd.yml \
+              --private-key ~/.ssh/ansible.pem \
+              -u ec2-user
           '''
         }
       }
