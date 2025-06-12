@@ -1,4 +1,4 @@
-pipeline {
+\\\pipeline {
   agent any
 
   environment {
@@ -14,38 +14,56 @@ pipeline {
 
     stage('Terraform Init') {
       steps {
-        withCredentials([[ 
-          $class: 'AmazonWebServicesCredentialsBinding', 
-          credentialsId: 'aws-credentials' 
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-credentials'
         ]]) {
-          script {
-            def status = sh(script: 'terraform init', returnStatus: true)
-            if (status != 0) {
-              error('❌ Terraform Init Failed. Check backend config or credentials.')
-            }
-          }
+          sh 'terraform init'
         }
       }
     }
 
     stage('Terraform Apply') {
       options {
-        timeout(time: 10, unit: 'MINUTES') // Prevent infinite hanging
+        timeout(time: 10, unit: 'MINUTES')
       }
       steps {
-        withCredentials([[ 
-          $class: 'AmazonWebServicesCredentialsBinding', 
-          credentialsId: 'aws-credentials' 
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-credentials'
         ]]) {
-          script {
-            def status = sh(script: 'terraform apply -auto-approve', returnStatus: true)
-            if (status != 0) {
-              error('❌ Terraform Apply Failed. Please check logs.')
-            }
-          }
+          sh 'terraform apply -auto-approve'
+        }
+      }
+    }
+
+    stage('Wait for EC2 to boot') {
+      steps {
+        script {
+          echo '⏳ Waiting for EC2 instance to become ready...'
+          sleep(60) // Optional: wait 60 seconds for boot
+        }
+      }
+    }
+
+    stage('Run Ansible on Remote Server') {
+      steps {
+        sshagent (credentials: ['ansible-ssh-key']) {
+          sh '''
+            ssh -o StrictHostKeyChecking=no ec2-user@13.234.112.80 \
+            'ansible-playbook -i /home/ec2-user/ansible-playbooks/inventory.ini /home/ec2-user/ansible-playbooks/install_httpd.yml --private-key /home/ec2-user/ansible-playbooks/ansible.pem
+          '''
         }
       }
     }
   }
-}
 
+  post {
+    success {
+      echo '✅ Pipeline completed successfully!'
+    }
+    failure {
+      echo '❌ Pipeline failed. Check console output.'
+    }
+  }
+}
