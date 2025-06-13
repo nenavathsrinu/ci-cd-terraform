@@ -58,8 +58,8 @@ pipeline {
         sshagent (credentials: ['ansible']) {
           sh '''
             mkdir -p ~/.ssh
-            ssh-keyscan -H 13.232.198.57 >> ~/.ssh/known_hosts
-            ssh ec2-user@13.232.198.57 '
+            ssh-keyscan -H 65.0.7.210 >> ~/.ssh/known_hosts
+            ssh ec2-user@65.0.7.210'
               ansible-playbook -i /home/ec2-user/ansible-playbooks/inventory.ini \
               /home/ec2-user/ansible-playbooks/install_httpd.yml \
               --private-key /home/ec2-user/ansible-playbooks/ansible.pem'
