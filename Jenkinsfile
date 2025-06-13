@@ -57,8 +57,12 @@ pipeline {
       steps {
         sshagent (credentials: ['ansible']) {
           sh '''
-            mkdir -p ~/.ssh && touch ~/.ssh/known_hosts
-            ssh -o StrictHostKeyChecking=no ec2-user@13.127.183.251 "ansible-playbook -i /home/ec2-user/ansible-playbooks/inventory.ini /home/ec2-user/ansible-playbooks/install_httpd.yml --private-key /home/ec2-user/ansible-playbooks/client.pem"
+            mkdir -p ~/.ssh
+            ssh-keyscan -H 13.232.198.57 >> ~/.ssh/known_hosts
+            ssh ec2-user@13.232.198.57 '
+              ansible-playbook -i /home/ec2-user/ansible-playbooks/inventory.ini \
+              /home/ec2-user/ansible-playbooks/install_httpd.yml \
+              --private-key /home/ec2-user/ansible-playbooks/ansible.pem'
           '''
         }
       }
