@@ -1,0 +1,53 @@
+pipeline {
+  agent any
+
+  environment {
+    AWS_DEFAULT_REGION = 'ap-south-1'
+  }
+
+  stages {
+    stage('Checkout Code') {
+      steps {
+        git credentialsId: 'github-creds', url: 'https://github.com/nenavathsrinu/ci-cd-terraform.git', branch: 'main'
+      }
+    }
+
+    stage('Terraform Init') {
+      steps {
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-credentials'
+        ]]) {
+          sh 'terraform init'
+        }
+      }
+    }
+
+    stage('Terraform Destroy') {
+      steps {
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-credentials'
+        ]]) {
+          script {
+            try {
+              sh 'terraform destroy -auto-approve'
+            } catch (err) {
+              echo "⚠️ Terraform destroy failed: ${err}"
+              error("Stopping pipeline due to destroy failure.")
+            }
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    success {
+      echo '✅ Infrastructure destroyed successfully!'
+    }
+    failure {
+      echo '❌ Failed to destroy infrastructure. Check logs.'
+    }
+  }
+}
