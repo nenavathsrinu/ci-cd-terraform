@@ -1,9 +1,9 @@
   terraform {
   backend "s3" {
-    bucket         = "lsg-terraform-tf-state-bucket"
+    bucket         = "lsg-terraform-s3-bucket"
     key            = "ansible-ec2/terraform.tfstate"
     region         = "ap-south-1"
-    dynamodb_table = "terraform-locks"
+    dynamodb_table = "terraform-lock"
     encrypt        = true
   }
 }
